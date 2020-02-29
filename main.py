@@ -2,8 +2,19 @@ from collections.abc import Sequence
 from utilities import Permfind, sgn, mult  # , swap,swapV2
 
 
-class matrix(Sequence):
+class Matrix(Sequence):
     # "inmat" always refers to input matrix
+    @staticmethod
+    def ele_add(a, b, r, c):
+        return a[r][c] + b[r][c]
+
+    @staticmethod
+    def ele_mult_sc(a, b, r, c):
+        return a[r][c] * b
+
+    @staticmethod
+    def ele_mult_mat(a, b, r, c):
+        return a[r][c] * b[r][c]
 
     def __init__(self, inmat):  # initializes base matrix
         if self.isMatrix(inmat):
@@ -35,6 +46,12 @@ class matrix(Sequence):
             self.reset()
         return self.base[key]
 
+    def __str__(self):
+        # A maybe too complicated way of getting the
+        # longest number in self.base
+        maxLen = max(max(len(str(n)) for n in row) for row in self.base)
+        return '\n'.join([str(row) for row in self.base])
+
     def __repr__(self):
         return repr(self.base)
 
@@ -42,7 +59,7 @@ class matrix(Sequence):
     def isMatrix(self, inmat="No matrix given"):
         if inmat == "No matrix given":
             inmat = self.base
-        if type(inmat) != list and type(inmat) != matrix:
+        if type(inmat) != list and type(inmat) != Matrix:
             return False
         temp = []
 
@@ -80,29 +97,23 @@ class matrix(Sequence):
     def elewise(self, inmat, operation):
         newmat = [[operation(self.base, inmat, row, column) for column in range(len(self.base[row]))] for row in
                   range(len(self.base))]
-        return newmat
+        return Matrix(newmat)
 
     def __add__(self, other):
         if not self.isMatrix() or not self.isMatrix(other):
             raise TypeError()
         if len(self.base) != len(other.base) or len(self.base[0]) != len(other.base[0]):
             raise TypeError()
-        return self.elewise(other, lambda a, b, r, c: a[r][c] + b[r][c])
-
-    def __iadd__(self, other):
-        return self + other
+        return self.elewise(other, self.ele_add)
 
     def __mul__(self, other):
         if not self.isMatrix() or not self.isMatrix(other):
             if isinstance(other, (int, float, complex)):
-                return self.elewise(other, lambda a, b, r, c: a[r][c] * b)
+                return self.elewise(other, self.ele_mult_sc)
             raise TypeError()
         if len(self.base) != len(other.base) or len(self.base[0]) != len(other.base[0]):
             raise TypeError()
-        return self.elewise(other, lambda a, b, r, c: a[r][c] * b[r][c])
-
-    def __imul__(self, other):
-        return self * other
+        return self.elewise(other, self.ele_mult_mat)
 
     # changes base matrix
     def tpose(self):  # transposes matrix
@@ -112,10 +123,6 @@ class matrix(Sequence):
         for x in range(len(newmat)):
             newmat[x] = list(newmat[x])
         self.base = newmat
-
-    def fprint(self):  # prints each row separately
-        for row in self.base:
-            print(row)
 
     def __matmul__(self, inmat):  # matrix multiplication, returns product
         if not self.isMatrix() or not self.isMatrix(inmat):
@@ -129,12 +136,7 @@ class matrix(Sequence):
                 newmat[row].append(0)
                 for no in range(len(self.base[0])):
                     newmat[row][column] += self.base[row][no] * inmat[no][column]
-        return newmat
-
-    # sets matrix to base * inmat
-    def __imatmul__(self, inmat):
-        self.base = self.__matmul__(inmat)
-        return self
+        return Matrix(newmat)
 
     @property
     def det(self):  # finds determinant of matrix
@@ -142,7 +144,7 @@ class matrix(Sequence):
             self.reset()
         if len(self.base) != len(self.base[0]):
             raise TypeError('can\t determine determinant')
-        if self.prevmatrix == self.base and self.determinant != None:
+        if self.prevmatrix == self.base and self.determinant is not None:
             return self.determinant
         else:
             self.prevmatrix = self.base
@@ -156,9 +158,11 @@ class matrix(Sequence):
         return det
 
 
-m = matrix([[1, 2, 3], [4, 5, 6], [7, 8, 9]])
-f = matrix([[9, 8, 7], [6, 5, 4], [3, 2, 1]])
-m + f
+m = Matrix([[1, 2, 3], [4, 5, 6], [7, 8, 9]])
+f = Matrix([[9, 8, 7], [6, 5, 4], [3, 2, 1]])
+r = m * f
+m *= f
+print(m)
 
 # swappable = [x for x in range(10)]
 # print(swap(swappable, 3, 7))
